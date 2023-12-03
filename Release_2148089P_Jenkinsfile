@@ -1,0 +1,75 @@
+pipeline {
+
+   agent any
+
+   stages {
+
+      stage('S1 2148089P') {
+         steps {
+            echo "Stage1_2148089P : Release Environment Preparation Completed"
+         }
+      }
+
+      stage('S2 2148089P') {
+         steps {
+            sh 'docker rm -f WebApp_2148089P'
+            sh 'docker run -d -it -p 31200:80 --name=WebApp_2148089P wb1_image_2148089p /bin/sh -c "apache2ctl -DFOREGROUND"'
+            echo "Stage2_2148089P : Release Container WebApp_2148089P Created Completed"
+         }
+      }
+
+      stage('S3 2148089P') {
+         parallel {
+            stage('S3 2148089P API Test') {
+               steps {
+                  echo "Stage3_2148089P: API Test Completed"
+               }
+            }
+
+            stage('S3 2148089P Scan Test') {
+               steps {
+                  echo "Stage3_2148089P: Scan Test Completed"
+               }
+            }
+         }
+      }
+
+      stage('S4 2148089P') {
+         steps {
+            catchError {
+               input('2148089P, proceed to release the work to next phase?')
+            }
+         }
+
+         post {
+            success {
+               script {
+                  env.USER_CHOICE = 'proceed'
+               }
+            }
+
+            aborted {
+               script {
+                  env.USER_CHOICE = 'abort'
+               }
+            }
+         }
+
+      }
+
+      stage('S5 2148089P') {
+         steps {
+            script {
+               if (env.USER_CHOICE == 'proceed') {
+                  echo "Stage5_2148089P : Work Release - Proceeds to Next Phase"
+               }
+               else if (env.USER_CHOICE == 'abort') {
+                  echo "Stage5_2148089P : Work Release - Stops"
+               }
+            }
+         }
+      }
+
+   }
+
+}
